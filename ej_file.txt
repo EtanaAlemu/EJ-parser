@@ -1,0 +1,34 @@
+------------03/04/24 11:19:18-------------
+============TRANSACTION START=============
+11:19:18 CARD:;458300XXXXXX9694?          
+11:19:18 CAMERA  1 P20240304111918298.JPG 
+11:19:22 ATR RECEIVED T=0                 
+11:19:23 AID=A0000000031010               
+11:19:24 CARD:;458300XXXXXX9694?          
+11:19:29 PIN ENTERED                      
+11:19:31 AMOUNT/INFORMATION FDK I PRESSED 
+11:19:34 1st GenAC:P1 = 80[ARQC]          
+11:19:35 TNX REQUEST, OPCODE: AAAF   A    
+11:19:36 TNX REPLY, NEXT: 077, FUNCID: A  
+11:19:37 2nd GenAC:P1 = 40[TC]            
+11:19:40 CARD TAKEN BY CUSTOMER           
+11:19:41 CAMERA  2 P20240304111940715.JPG 
+------------03/04/24 11:19:46-------------
+24/03/04 24/03/04 11:19 0                 
+113 6016 011000                        
+0004583********9694                       
+    100.00  230                           
+SURCHARGE:  0.00                          
+                                          
+            000                           
+11:19:46 DISPENSE                         
+         ETB100   -001                    
+11:19:47 NOTES PRESENT AT CASH SLOT       
+11:19:47 CAMERA  3 P20240304111947262.JPG 
+11:19:47 CASH SHUTTER OPENED              
+11:19:52 NOTES TAKEN BY CUSTOMER          
+11:19:52 CAMERA  3 P20240304111952649.JPG 
+------------03/04/24 11:19:56-------------
+11:19:56 CASH SHUTTER CLOSED              
+11:19:57 CAMERA2 31 E20240304111947629.MPG
+------------03/04/24 11:20:00-------------
