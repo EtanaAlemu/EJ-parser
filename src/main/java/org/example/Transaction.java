@@ -5,6 +5,8 @@ import java.util.List;
 
 // Transaction class to represent a transaction with multiple events
 class Transaction {
+    private boolean isCardless;
+    private boolean isDispensed;
     private String transactionStart;
     private String branchCode;
     private String authorizationReference;
@@ -17,6 +19,22 @@ class Transaction {
     private String dispenseEvent;
     private String dispensedAmount;
     private List<Event> events = new ArrayList<>();
+
+    public boolean isCardless() {
+        return isCardless;
+    }
+
+    public void setCardless(boolean cardless) {
+        isCardless = cardless;
+    }
+
+    public boolean isDispensed() {
+        return isDispensed;
+    }
+
+    public void setDispensed(boolean dispensed) {
+        isDispensed = dispensed;
+    }
 
     // Method to add an event to the transaction
     public void addEvent(Event event) {

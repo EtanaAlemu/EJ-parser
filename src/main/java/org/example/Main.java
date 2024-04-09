@@ -15,79 +15,38 @@ import static org.example.Utils.*;
 
 public class Main {
     public static void main(String[] args) {
-        String filename = "ej_file.txt";
+//        String filename = "ej_file.txt";
+        String filename = "20240304.txt";
         List<Transaction> transactions = parseEJFile(filename);
         String json = convertToJson(transactions);
         System.out.println(json);
-
-//        String line = "11:57:15 CARD:;458300XXXXXX9694?";
-//        String[] parts = splitCardLine(line);
-//        String time = parts[0];
-//        String key = parts[1];
-//        String value = parts[2];
-//        System.out.println("Time: " + time);
-//        System.out.println("Key: " + key);
-//        System.out.println("Value: " + value);
-
-//        String[] lines = {
-//                "11:19:18 CAMERA  1 P20240304111918298.JPG",
-//                "11:19:41 CAMERA  2 P20240304111940715.JPG",
-//                "11:19:47 CAMERA  3 P20240304111947262.JPG",
-//                "11:19:52 CAMERA  3 P20240304111952649.JPG",
-//                "11:19:57 CAMERA2 31 E20240304111947629.MPG"
-//        };
-//
-//        for (String line : lines) {
-//            String[] parts = splitCameraLine(line);
-//            String time = parts[0];
-//            String key = parts[1];
-//            String value = parts[2];
-//            System.out.println("Time: " + time);
-//            System.out.println("Key: " + key);
-//            System.out.println("Value: " + value);
-//            System.out.println();
-//        }
-
-
-//        String line = "11:19:22 ATR RECEIVED T=0                 ";
-//        String[] parts = splitATRLine(line);
-//        String time = parts[0];
-//        String key = parts[1];
-//        String value = parts[2];
-//        System.out.println("Time: " + time);
-//        System.out.println("Key: " + key);
-//        System.out.println("Value: " + value);
-
-
-//        String line = "11:19:23 AID=A0000000031010";
-//        String[] parts = splitAIDLine(line);
-//        String time = parts[0];
-//        String key = parts[1];
-//        String value = parts[2];
-//        System.out.println("Time: " + time);
-//        System.out.println("Key: " + key);
-//        System.out.println("Value: " + value);
     }
 
-        public static List<Transaction> parseEJFile(String filename) {
-            List<Transaction> transactions = new ArrayList<>();
-            try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
-                String line;
-                Transaction currentTransaction = null;
-                while ((line = br.readLine()) != null) {
-                    if (line.startsWith("============TRANSACTION START=============")) {
-                        if (currentTransaction != null) {
-                            transactions.add(currentTransaction);
-                        }
-                        currentTransaction = new Transaction();
-                    } else {
-                    if (line.contains("CARD:")) {
+    public static List<Transaction> parseEJFile(String filename) {
+        List<Transaction> transactions = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String line;
+            Transaction currentTransaction = null;
+            while ((line = br.readLine()) != null) {
+                if (line.startsWith("============TRANSACTION START=============")) {
+                    if (currentTransaction != null) {
+                        transactions.add(currentTransaction);
+                    }
+                    currentTransaction = new Transaction();
+                } else if (currentTransaction != null) {
+                    if (line.contains("CARDLESS TNX STARTED")) {
+                        currentTransaction.setCardless(true);
+                    } else if (line.contains("CARD:")) {
                         String[] cardEvent = splitCardLine(line);
                         Event event = new Event(cardEvent[0], cardEvent[1], cardEvent[2]);
                         currentTransaction.addEvent(event);
                     } else if (line.contains("CAMERA")) {
                         String[] cameraEvent = splitCameraLine(line);
                         Event event = new Event(cameraEvent[0], cameraEvent[1], cameraEvent[2]);
+                        currentTransaction.addEvent(event);
+                        } else if (line.contains("CUSTOMER INFORMATION")) {
+                        String[] customerInfoEvent = splitCustomerInfoEnteredLine(line);
+                        Event event = new Event(customerInfoEvent[0], customerInfoEvent[1], customerInfoEvent[2]);
                         currentTransaction.addEvent(event);
                     } else if (line.contains("ATR")) {
                         String[] atrEvent = splitATRLine(line);
@@ -145,34 +104,37 @@ public class Main {
                         currentTransaction.setBranchCode(line.substring(0, 3).trim());
                         currentTransaction.setAuthorizationReference(line.substring(4, 8).trim());
                         currentTransaction.setUnknownData(line.substring(9).trim());
-                    } else if (line.matches("^\\d{7}\\*{8}\\d{4}\\s*$")) {
+                    } else if (line.matches("^\\d{7}\\*{8}\\d{4}\\s*$") || line.matches("^\\d{4}\\*{11}\\d{4}\\s*$") ) {
                         currentTransaction.setPAN(line.trim());
-                    } else if (line.matches("^\\s*\\d+\\.\\d+\\s+\\d+\\s*$")) {
+                    } else if (line.matches("^\\s*\\d{1,3}(,\\d{3})*(\\.\\d+)?\\s+\\d+\\s*$")) {
                         String[] parts = line.split("\\s+");
-                        currentTransaction.setWithdrawalAmount(parts[1]);
+                        String withdrawalAmount = parts[1].replaceAll(",", ""); // Remove commas from the withdrawal amount
+                        currentTransaction.setWithdrawalAmount(withdrawalAmount);
                         currentTransaction.setCurrencyCode(parts[2]);
                     } else if (line.startsWith("SURCHARGE:")) {
                         currentTransaction.setSurcharge(line.substring(10).trim());
                     } else if (line.matches("\\d+")) {
                         currentTransaction.setChargedFee(line);
-                    } else if (line.startsWith("DISPENSE")) {
-                        currentTransaction.setDispenseEvent(line);
-                    } else if (line.matches("^\\s*([A-Z]+)\\s*(\\d+)\\s*(-?\\d+)\\s*$")) {
-                        Pattern pattern = Pattern.compile("([A-Z]+)\\s*(\\d+)\\s*(-?\\d+)");
-                        Matcher matcher = pattern.matcher(line);
+                    } else if (line.contains("DISPENSE")) {
+                        currentTransaction.setDispensed(true);
 
+
+                    } else if (line.matches("^\\s*([A-Z]+)\\s*([\\d,]+)\\s*(-?\\d+)\\s*$") && currentTransaction.isDispensed()) {
+                        Pattern pattern = Pattern.compile("([A-Z]+)\\s*([\\d,]+)\\s*(-?\\d+)");
+                        Matcher matcher = pattern.matcher(line);
                         if (matcher.find()) {
                             String currency = matcher.group(1);
                             String amount = matcher.group(2);
                             String unknownAmount = matcher.group(3);
-
-
                             currentTransaction.setDispensedAmount(amount);
                         }
+                    } else if (line.startsWith("============STATUS INFORMATION============")) {
+                        transactions.add(currentTransaction);
+                        currentTransaction = null;
                     } else {
                         // Ignore unknown lines
+                        System.out.println("unknown lines: "+line);
                     }
-
                 }
             }
 
